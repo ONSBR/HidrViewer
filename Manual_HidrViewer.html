@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Manual de Utilização — HidrViewer</title>
+<style>
+  /* ===== Configuração de página (ABNT NBR 14724): margens 3cm sup./esq., 2cm inf./dir.;
+     número de página no canto superior direito, em Arial 10. ===== */
+  @page {
+    size: A4;
+    margin: 3cm 2cm 2cm 3cm;
+    @top-right { content: counter(page); font-family: Arial, sans-serif; font-size: 10pt; }
+  }
+  @page:first { @top-right { content: ""; } }   /* capa sem numeração */
+
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  /* ===== Corpo do texto: Arial 12, entrelinha 1,5, justificado (ABNT) ===== */
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12pt;
+    line-height: 1.5;
+    color: #000;
+    text-align: justify;
+    margin: 0;
+  }
+  p {
+    margin: 0 0 .5em;
+    text-indent: 1.25cm;   /* recuo de primeira linha (ABNT) */
+  }
+  p.noindent, .lead { text-indent: 0; }
+
+  /* ===== Títulos de seção numerados (NBR 6024): mesmo corpo do texto, em negrito,
+     alinhados à esquerda; seção primária em CAIXA ALTA. ===== */
+  h2, h3 { font-size: 12pt; font-weight: bold; text-align: left; text-indent: 0; page-break-after: avoid; }
+  h2 { text-transform: uppercase; margin: 1.5em 0 1em; }
+  h3 { margin: 1.2em 0 .6em; }
+
+  ol, ul { margin: .3em 0 .7em; padding-left: 1.25cm; }
+  li { margin: .18em 0; text-align: justify; }
+  /* Listas não ordenadas com travessão (marcador aceito pela ABNT) */
+  ul { list-style: none; padding-left: 1.6cm; }
+  ul > li { position: relative; }
+  ul > li::before { content: "\2013"; position: absolute; left: -.7cm; }
+
+  code, .mono {
+    font-family: 'Courier New', Consolas, monospace;
+    font-size: 11pt;
+  }
+  strong { font-weight: bold; }
+
+  .break { page-break-before: always; }
+  .avoid { page-break-inside: avoid; }
+
+  /* ===== Capa ===== */
+  .cover {
+    background: linear-gradient(135deg, #0d3721 0%, #1a7a4a 50%, #24a371 100%);
+    color: #fff; border-radius: 18px; padding: 3cm 2.2cm;
+    min-height: 22cm; display: flex; flex-direction: column; justify-content: center;
+    text-align: left;
+  }
+  .cover p { text-indent: 0; text-align: left; }
+  .cover .kicker { letter-spacing: .18em; font-size: 11pt; text-transform: uppercase; opacity: .85; margin: 0 0 .3cm; }
+  .cover h1 { color: #fff; font-size: 40pt; text-transform: none; margin: 0 0 .35cm; }
+  .cover .sub { font-size: 13pt; opacity: .95; max-width: 16cm; line-height: 1.4; }
+  .cover .meta { margin-top: 1.1cm; font-size: 11pt; opacity: .9; line-height: 1.5; }
+
+  /* ===== Sumário (ABNT): título centralizado, itens com linha de chamada ===== */
+  h2.center { text-align: center; }
+  .toc { list-style: none; padding: 0; margin: 1em 0; }
+  .toc li { display: flex; align-items: baseline; margin: .3em 0; text-align: left; }
+  .toc .n { white-space: nowrap; }
+  .toc .leader { flex: 1; border-bottom: 1px dotted #000; margin: 0 4px; transform: translateY(-3px); }
+  .toc .pg { white-space: nowrap; }
+
+  /* ===== Notas (ABNT: corpo menor, entrelinha simples) ===== */
+  p.nota { font-size: 10pt; line-height: 1.2; text-indent: 0; margin: .5em 0; }
+
+  /* Aviso importante (mantido em destaque discreto, monocromático) */
+  .aviso {
+    border: 1px solid #000; padding: 10px 14px; margin: .8em 0;
+    line-height: 1.3; page-break-inside: avoid;
+  }
+  .aviso .ct { display: block; font-weight: bold; text-transform: uppercase; margin-bottom: .3em; }
+  .aviso p, .aviso ul { text-indent: 0; }
+  .aviso ul { margin: .3em 0 0; }
+
+  /* ===== Tabela no padrão ABNT: somente traços horizontais, laterais abertas ===== */
+  .tab-title { font-size: 10pt; text-indent: 0; margin: 1em 0 .2em; text-align: left; }
+  .tab-source { font-size: 10pt; text-indent: 0; margin: .2em 0 1em; text-align: left; }
+  table { border-collapse: collapse; width: 100%; font-size: 10pt; line-height: 1.25; }
+  th, td { padding: 4px 7px; text-align: left; vertical-align: top; border: 0; }
+  thead th { border-top: 1.5pt solid #000; border-bottom: .75pt solid #000; }
+  tbody tr:last-child td { border-bottom: 1.5pt solid #000; }
+
+  footer { margin-top: 1.5em; padding-top: .5em; border-top: .75pt solid #000; font-size: 9pt; line-height: 1.3; text-indent: 0; }
+</style>
+</head>
+<body>
+
+<!-- ================= CAPA / FOLHA DE ROSTO ================= -->
+<section class="cover">
+  <p class="kicker">Manual de Utilização</p>
+  <h1>HidrViewer</h1>
+  <p class="sub">Visualização, detecção de formato, conversão e edição do arquivo binário
+    <span class="mono" style="color:#fff;">hidr.dat</span> de cadastro das usinas hidrelétricas.</p>
+  <p class="meta">Versão 0.0.1 · Windows 64-bit<br>
+    Desenvolvido com o framework Tauri (Rust + HTML/CSS/JavaScript)<br>
+    2026</p>
+</section>
+
+<!-- ================= SUMÁRIO ================= -->
+<div class="break"></div>
+<h2 class="center">Sumário</h2>
+<ul class="toc">
+  <li><span class="n">1 &nbsp;Requisitos e instalação</span><span class="leader"></span><span class="pg">3</span></li>
+  <li><span class="n">2 &nbsp;Visão geral da interface</span><span class="leader"></span><span class="pg">3</span></li>
+  <li><span class="n">3 &nbsp;Carregando um arquivo hidr.dat</span><span class="leader"></span><span class="pg">4</span></li>
+  <li><span class="n">4 &nbsp;Aba Tabela</span><span class="leader"></span><span class="pg">4</span></li>
+  <li><span class="n">5 &nbsp;Aba Usina</span><span class="leader"></span><span class="pg">5</span></li>
+  <li><span class="n">6 &nbsp;Editando os dados</span><span class="leader"></span><span class="pg">5</span></li>
+  <li><span class="n">7 &nbsp;Adicionando uma usina</span><span class="leader"></span><span class="pg">6</span></li>
+  <li><span class="n">8 &nbsp;Exportar e importar CSV</span><span class="leader"></span><span class="pg">7</span></li>
+  <li><span class="n">9 &nbsp;Converter REAL*4 → REAL*8</span><span class="leader"></span><span class="pg">8</span></li>
+  <li><span class="n">10 &nbsp;Exportar o hidr.dat</span><span class="leader"></span><span class="pg">8</span></li>
+  <li><span class="n">11 &nbsp;Verificações de consistência</span><span class="leader"></span><span class="pg">8</span></li>
+  <li><span class="n">12 &nbsp;Perguntas</span><span class="leader"></span><span class="pg">9</span></li>
+</ul>
+
+<div class="break"></div>
+<p class="lead">O HidrViewer é um aplicativo desktop para visualização,
+detecção de formato, conversão e edição do arquivo binário de cadastro das usinas hidrelétricas
+(<span class="mono">hidr.dat</span>), utilizado pelos modelos da cadeia de planejamento energético
+(NEWAVE, DECOMP e DESSEM). Este manual descreve, passo a passo, como usar todos os recursos do aplicativo.</p>
+
+<!-- ================= 1 ================= -->
+<h2>1 &nbsp;Requisitos e instalação</h2>
+<p>Requisitos e insumos de instalação:</p>
+<ul>
+  <li><strong>Sistema operacional:</strong> Windows 64-bit.</li>
+  <li><strong>Instalador:</strong> <span class="mono">HidrViewer_0.0.1_x64-setup.exe</span>.</li>
+</ul>
+<p>Para instalar, proceda da seguinte forma:</p>
+<ol>
+  <li>Execute o arquivo <span class="mono">HidrViewer_0.0.1_x64-setup.exe</span>.</li>
+  <li>Siga as instruções do assistente de instalação.</li>
+  <li>O aplicativo utiliza o runtime Microsoft Edge WebView2. Se ele ainda não estiver presente no
+      computador, o instalador se encarrega de disponibilizá-lo.</li>
+  <li>Ao final, abra o HidrViewer pelo menu Iniciar ou pelo atalho criado.</li>
+</ol>
+<p class="nota"><strong>Nota —</strong> o HidrViewer trabalha localmente; os arquivos que você abre não
+são enviados para nenhum servidor.</p>
+
+<!-- ================= 2 ================= -->
+<h2>2 &nbsp;Visão geral da interface</h2>
+<p>A janela é dividida em três regiões: cabeçalho, abas e barra de ações.</p>
+<h3>2.1 &nbsp;Cabeçalho</h3>
+<p>Mostra o nome do aplicativo e, depois de carregar um arquivo, um painel de informações com:</p>
+<ul>
+  <li><strong>Registros:</strong> total de registros do arquivo (inclui os slots em branco; em geral 320 ou 600).</li>
+  <li><strong>Usinas cadastradas:</strong> quantos registros têm nome de usina preenchido.</li>
+  <li><strong>Tamanho por registro:</strong> em bytes (792 para REAL*4, 832 para REAL*8).</li>
+  <li><strong>Formato PCA|PCV:</strong> o formato detectado, REAL*4 ou REAL*8.</li>
+</ul>
+<h3>2.2 &nbsp;Abas</h3>
+<ul>
+  <li><strong>Tabela:</strong> todos os dados em formato de planilha (com filtros e edição).</li>
+  <li><strong>Usina:</strong> ficha detalhada de uma usina por vez.</li>
+</ul>
+<h3>2.3 &nbsp;Barra de ações</h3>
+<p>Visível apenas na aba Tabela, após carregar um arquivo. Concentra os botões de exportação,
+importação, edição e conversão.</p>
+
+<!-- ================= 3 ================= -->
+<h2>3 &nbsp;Carregando um arquivo hidr.dat</h2>
+<p>Ao abrir o aplicativo, você verá a área de upload central. Para carregar um arquivo:</p>
+<ol>
+  <li>Clique na área “Clique ou arraste o arquivo hidr.dat”, ou arraste e solte o arquivo sobre ela.</li>
+  <li>O HidrViewer detecta automaticamente o formato do arquivo:
+    <ul>
+      <li><strong>REAL*4:</strong> registros de 792 bytes (coeficientes em precisão simples).</li>
+      <li><strong>REAL*8:</strong> registros de 832 bytes (coeficientes em precisão dupla).</li>
+    </ul>
+  </li>
+  <li>Quando o tamanho é compatível com os dois formatos ao mesmo tempo, o aplicativo desempata
+      analisando o alinhamento dos nomes das usinas, escolhendo o formato em que os nomes ficam legíveis.</li>
+  <li>As informações do cabeçalho são preenchidas e a primeira usina cadastrada já é exibida.</li>
+</ol>
+<p>Se o tamanho do arquivo não for múltiplo de 792 nem de 832 bytes, o aplicativo avisa que o formato é
+desconhecido e não carrega o arquivo. Para trocar de arquivo a qualquer momento, use o botão
+<strong>Novo arquivo</strong> (canto superior da barra de ações); isso limpa a tela e volta à área de upload.</p>
+
+<!-- ================= 4 ================= -->
+<h2>4 &nbsp;Aba Tabela</h2>
+<p>A aba Tabela mostra todas as usinas cadastradas em formato de planilha, com uma coluna para cada
+campo do <span class="mono">hidr.dat</span> (código, nome, submercado, volumes, cotas, polinômios,
+conjuntos de máquinas etc.). A ordem das colunas é compatível com a planilha do CadUsH.</p>
+<h3>4.1 &nbsp;Filtros</h3>
+<p>Acima da tabela há três filtros que podem ser combinados:</p>
+<ul>
+  <li><strong>Usina:</strong> filtra pelo nome (busca por trecho, sem diferenciar maiúsculas).</li>
+  <li><strong>Código:</strong> filtra por número da usina (aceita seleção pela lista de códigos).</li>
+  <li><strong>Submercado:</strong> filtra por 1 – Sudeste, 2 – Sul, 3 – Nordeste ou 4 – Norte.</li>
+</ul>
+<p>Os campos com código de referência (Submercado, Empresa, Jusante, Desvio, Tipo de Turbina,
+Regulação etc.) são exibidos com um rótulo amigável (ex.: <span class="mono">1 - Sudeste</span>,
+<span class="mono">175 - P.AFONSO 4</span>), mas continuam gravados como número ou letra no arquivo binário.</p>
+
+<!-- ================= 5 ================= -->
+<h2>5 &nbsp;Aba Usina</h2>
+<p>A aba Usina apresenta a ficha completa de uma usina de cada vez:</p>
+<ol>
+  <li>À esquerda, uma lista de cartões (um por usina). Use o campo <strong>Buscar usina…</strong> para
+      filtrar por nome ou código.</li>
+  <li>Clique em um cartão para abrir a ficha detalhada à direita, organizada em seções:
+    <ul>
+      <li><strong>Identificação:</strong> código, nome, posto, jusante, desvio, submercado, empresa.</li>
+      <li><strong>Dados de Operação:</strong> regulação, vazão mínima histórica, volumes (máximo, mínimo,
+          referência, vertedouro, desvio), cotas e a evaporação mensal.</li>
+      <li><strong>Polinômios:</strong> Cota × Volume, Área × Cota e os polinômios de Jusante (com suas referências).</li>
+      <li><strong>Outros Dados:</strong> tabela de conjuntos de máquinas (nº de máquinas, potência efetiva,
+          vazão e queda por conjunto), produtibilidade, tipo de turbina, fatores de carga, TEIF, IP, perdas
+          e demais campos.</li>
+    </ul>
+  </li>
+</ol>
+<p>Esta aba é <strong>somente leitura</strong>; a edição é feita na aba Tabela.</p>
+
+<!-- ================= 6 ================= -->
+<h2>6 &nbsp;Editando os dados</h2>
+<p>A edição é feita na aba Tabela:</p>
+<ol>
+  <li>Clique em <strong>Editar dados</strong>. A tabela entra em modo de edição (o botão passa a se chamar
+      <strong>Concluir edição</strong>) e passa a mostrar também os slots em branco, para que possam ser preenchidos.</li>
+  <li>Clique em uma célula e digite o novo valor:
+    <ul>
+      <li>Números decimais usam vírgula (ex.: <span class="mono">1234,56</span>).</li>
+      <li>Pressione <strong>Enter</strong> para confirmar ou <strong>Esc</strong> para cancelar a edição da célula.</li>
+      <li>Uma célula alterada fica destacada (marcação de “célula modificada”).</li>
+    </ul>
+  </li>
+  <li>A coluna <strong>Código</strong> não é editável, pois corresponde à posição do registro no arquivo.</li>
+</ol>
+<h3>6.1 &nbsp;Recursos de edição em lote</h3>
+<ul>
+  <li><strong>Seleção retangular:</strong> clique em uma célula e arraste (ou use Shift + clique) para
+      selecionar um bloco de células.</li>
+  <li><strong>Limpar um trecho:</strong> com um bloco selecionado, pressione Delete ou Backspace para
+      limpar todas as células de uma vez (texto → vazio; número → 0).</li>
+  <li><strong>Colar de planilha ou CSV:</strong> copie um trecho do Excel/CSV e cole em uma célula. O
+      HidrViewer distribui os valores para a direita e para baixo a partir da célula focada (aceita
+      separador de tabulação ou <span class="mono">;</span>).</li>
+</ul>
+<h3>6.2 &nbsp;Consistência durante a edição</h3>
+<p>A cada valor digitado, o aplicativo valida a célula (veja a seção 11):</p>
+<ul>
+  <li><strong>Erro (vermelho):</strong> valor logicamente inválido. Bloqueia a exportação do
+      <span class="mono">hidr.dat</span> e impede concluir a edição até ser corrigido.</li>
+  <li><strong>Aviso (laranja):</strong> valor pouco usual, mas permitido. Não bloqueia.</li>
+</ul>
+<p>Passe o mouse sobre a célula destacada para ver a mensagem explicando o problema. Ao terminar,
+clique em <strong>Concluir edição</strong>. Se ainda houver erros (células vermelhas), o aplicativo lista
+as pendências e não deixa sair do modo de edição.</p>
+
+<!-- ================= 7 ================= -->
+<h2>7 &nbsp;Adicionando uma usina</h2>
+<p>O código da usina corresponde à posição do registro no arquivo. Para cadastrar uma usina em um
+código que ainda não existe:</p>
+<ol>
+  <li>No campo <strong>Adicionar usina nº:</strong>, digite o número desejado (de 1 até 600).</li>
+  <li>Clique em <strong>Adicionar</strong> (ou pressione Enter).</li>
+  <li>Se o número for maior do que o arquivo comporta, o HidrViewer estende o arquivo até o próximo
+      tamanho padrão (de 320 para 600 registros), criando os registros em branco necessários.</li>
+  <li>O aplicativo entra automaticamente em modo de edição e posiciona você na linha da nova usina,
+      pronta para ser preenchida.</li>
+</ol>
+<p>O máximo é de 600 registros; códigos acima disso não são aceitos.</p>
+
+<!-- ================= 8 ================= -->
+<h2>8 &nbsp;Exportar e importar CSV</h2>
+<p>O CSV serve para editar os dados em massa em uma planilha (Excel, LibreOffice) e depois trazê-los de
+volta. Os cabeçalhos das colunas são compatíveis com a planilha do CadUsH.</p>
+<h3>8.1 &nbsp;Exportar CSV</h3>
+<p>Clique em <strong>Exportar CSV</strong>. É gerado o arquivo <span class="mono">hidr_cadastro.csv</span>,
+com todas as usinas cadastradas e as colunas na mesma ordem exibida na tela. Os números usam vírgula
+decimal e o arquivo sai com codificação UTF-8 (BOM), para abrir corretamente no Excel.</p>
+<h3>8.2 &nbsp;Importar CSV (mantendo o formato)</h3>
+<ol>
+  <li>Edite o CSV na planilha. Não remova a coluna <span class="mono">CodUsina</span>, pois é ela que
+      casa cada linha com o registro correto.</li>
+  <li>Com um <span class="mono">hidr.dat</span> já carregado, clique em <strong>Importar CSV</strong>.</li>
+  <li>O HidrViewer aplica os valores do CSV mantendo o formato atual do arquivo (REAL*4 grava float32;
+      REAL*8 grava float64 nativo).</li>
+  <li>Apenas as células realmente alteradas são regravadas; as demais preservam os bytes originais.</li>
+  <li>Se o CSV referenciar códigos além do tamanho atual, o arquivo é estendido até o próximo tamanho
+      padrão (respeitando o teto de 600 registros).</li>
+  <li>Ao final, o aplicativo mostra quantos registros foram atualizados ou criados e revalida tudo;
+      inconsistências vindas do CSV bloqueiam a exportação da mesma forma que na edição manual.</li>
+</ol>
+<p class="nota"><strong>Dica —</strong> a importação casa as colunas pelo nome do cabeçalho, então a
+ordem das colunas no CSV não importa. Os cabeçalhos são reconhecidos com ou sem acento.</p>
+
+<h3>8.3 &nbsp;Coeficientes dos polinômios: casas decimais</h3>
+<p>Os coeficientes dos polinômios <span class="mono">PCV</span> (Cota × Volume) e
+<span class="mono">PAC</span> (Área × Cota) saem em notação científica e precisam manter
+<strong>todos os algarismos</strong> com que são exportados. O número de casas decimais
+depende do formato do arquivo:</p>
+<ul>
+  <li><strong>REAL*4</strong> (float32): 6 casas decimais na mantissa (7 algarismos significativos).
+      Exemplo: <span class="mono">1,234567E-08</span>.</li>
+  <li><strong>REAL*8</strong> (float64): 16 casas decimais na mantissa (17 algarismos significativos).
+      Exemplo: <span class="mono">1,2345678901234567E-08</span>.</li>
+</ul>
+<div class="aviso avoid">
+  <span class="ct">Atenção — arredondamento no Excel</span>
+  <p>Por padrão, o Excel exibe números em notação científica com apenas <strong>duas casas</strong>
+  (ex.: <span class="mono">1,23E-08</span>). Se você abrir o CSV, salvar e a célula tiver sido reduzida a
+  essas duas casas, o coeficiente volta <strong>arredondado</strong> e o polinômio importado fica incorreto.</p>
+  <p>Para evitar o arredondamento:</p>
+  <ul>
+    <li>Antes de editar, formate as colunas de coeficientes como <strong>Texto</strong> (assim o Excel não
+        reformata os números) ou como <strong>Científico</strong> com casas suficientes (no mínimo 6 para
+        REAL*4 e 16 para REAL*8).</li>
+    <li>Em caso de dúvida, edite o CSV em um editor de texto puro (Bloco de Notas), onde os valores não
+        são reformatados.</li>
+  </ul>
+</div>
+
+<!-- ================= 9 ================= -->
+<h2>9 &nbsp;Converter REAL*4 → REAL*8</h2>
+<p>Quando o arquivo carregado está em REAL*4, aparece o bloco <strong>Converter p/ REAL*8</strong> na
+barra de ações. Clique em <strong>Importar CSV → REAL*8</strong> para importar um CSV promovendo o
+arquivo para REAL*8. Nessa conversão, os coeficientes dos polinômios Cota × Volume e Área × Cota passam
+a ser gravados como float64 nativos (precisão dupla genuína), sem a “cauda binária” que resultaria de
+apenas alargar o float32.</p>
+<p class="nota"><strong>Atenção —</strong> a conversão inversa (REAL*8 → REAL*4) não é oferecida, pois
+rebaixar a precisão perderia informação dos coeficientes. Um arquivo REAL*8 só é exportado como REAL*8.</p>
+
+<!-- ================= 10 ================= -->
+<h2>10 &nbsp;Exportar o hidr.dat</h2>
+<ol>
+  <li>Clique em <strong>Exportar hidr.dat</strong>. O botão indica o formato de saída — Exportar
+      hidr.dat (REAL*4) ou (REAL*8).</li>
+  <li>O arquivo é gravado no mesmo formato em que está sendo trabalhado.</li>
+  <li>Se houver inconsistências de nível <strong>erro</strong> (células vermelhas), a exportação é
+      bloqueada e o aplicativo lista o que precisa ser corrigido. Avisos (laranja) não bloqueiam.</li>
+  <li>O arquivo é salvo com o nome <span class="mono">hidr.dat</span>.</li>
+</ol>
+
+<!-- ================= 11 ================= -->
+<h2>11 &nbsp;Verificações de consistência</h2>
+<p>O HidrViewer valida os campos abaixo tanto na edição manual quanto na importação de CSV. Registros
+sem nome de usina (slots em branco) não são validados.</p>
+<p class="tab-title">Tabela 1 – Regras de consistência por campo.</p>
+<table>
+  <thead><tr><th style="width:34%">Campo</th><th>Regra</th><th style="width:14%">Nível</th></tr></thead>
+  <tbody>
+    <tr><td>Submercado</td><td>Deve ser 1, 2, 3 ou 4</td><td>Erro</td></tr>
+    <tr><td>Tipo de turbina</td><td>Deve ser 0, 1, 2 ou 3</td><td>Erro</td></tr>
+    <tr><td>Tipo de regulação</td><td>Deve ser D, M ou S</td><td>Erro</td></tr>
+    <tr><td>Tipo de perda</td><td>Deve ser 1 ou 2</td><td>Erro</td></tr>
+    <tr><td>Influência no canal de fuga</td><td>Deve ser 0 (No) ou 1 (Yes)</td><td>Erro</td></tr>
+    <tr><td>Nº de conjuntos de máquinas</td><td>Entre 0 e 5</td><td>Erro</td></tr>
+    <tr><td>Nº de polinômios de jusante</td><td>Entre 0 e 6</td><td>Erro</td></tr>
+    <tr><td>Volume mínimo × máximo</td><td>Mínimo não pode ser maior que o máximo</td><td>Erro</td></tr>
+    <tr><td>Cota mínima × máxima</td><td>Mínima não pode ser maior que a máxima</td><td>Erro</td></tr>
+    <tr><td>Fator de carga mín. × máx.</td><td>Mínimo não pode ser maior que o máximo</td><td>Erro</td></tr>
+    <tr><td>TEIF, IP</td><td>Percentual entre 0 e 100</td><td>Erro</td></tr>
+    <tr><td>Jusante, Desvio</td><td>Devem apontar para uma usina existente e não para si mesma</td><td>Erro</td></tr>
+    <tr><td>Fator de carga</td><td>Fora de [0, 100]%</td><td>Aviso</td></tr>
+  </tbody>
+</table>
+<ul>
+  <li><strong>Erro (vermelho):</strong> impossibilidade lógica ou fora do domínio; bloqueia a exportação.</li>
+  <li><strong>Aviso (laranja):</strong> valor pouco usual, mas aceito; não bloqueia.</li>
+</ul>
+<p>Campos ainda “zerados” (não preenchidos) não são marcados como erro; a validação passa a valer quando
+um valor explícito é informado.</p>
+
+<!-- ================= 12 ================= -->
+<h2>12 &nbsp;Perguntas</h2>
+<h3>12.1 &nbsp;O aplicativo altera meu arquivo original?</h3>
+<p>Não. As edições ficam em memória; o arquivo só muda quando você clica em Exportar hidr.dat e salva o resultado.</p>
+<h3>12.2 &nbsp;Por que algumas linhas “somem” quando saio do modo de edição?</h3>
+<p>Fora do modo de edição, os slots em branco (sem nome de usina) são ocultados. Eles continuam
+existindo no arquivo e reaparecem ao entrar novamente em edição.</p>
+<h3>12.3 &nbsp;Editei uma célula, mas o valor não mudou nos bytes exportados. É defeito?</h3>
+<p>Não. Se o valor digitado é igual ao original, o HidrViewer preserva os bytes originais de propósito,
+para evitar perda de precisão na conversão texto → número.</p>
+<h3>12.4 &nbsp;Posso reordenar ou remover colunas no CSV?</h3>
+<p>Sim. A importação identifica cada coluna pelo nome do cabeçalho; colunas ausentes simplesmente
+preservam os valores atuais do arquivo.</p>
+
+<footer>
+  HidrViewer — aplicativo gratuito, de uso e redistribuição livres, desenvolvido com o framework Tauri
+  (backend em Rust; interface em HTML, CSS e JavaScript). Consulte THIRD_PARTY_LICENSES.md para as
+  licenças de terceiros.
+</footer>
+
+</body>
+</html>

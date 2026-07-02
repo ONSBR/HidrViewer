@@ -1,0 +1,13 @@
+# Dependências Node
+node_modules/
+
+# Build do Rust / Tauri (gigante, regenerável)
+src-tauri/target/
+src-tauri/gen/schemas/
+
+# Artefatos compactados
+*.zip
+
+# Arquivos de sistema operacional
+.DS_Store
+Thumbs.db
