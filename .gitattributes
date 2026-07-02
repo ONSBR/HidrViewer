@@ -1,0 +1,22 @@
+# Normalize line endings: store text as LF in the repo and check out LF on all
+# platforms. Prevents CRLF/LF churn between Windows and Linux/macOS contributors.
+* text=auto eol=lf
+
+# Lockfiles are text; keep them LF and diffable.
+Cargo.lock  text eol=lf
+package-lock.json text eol=lf
+
+# Binary assets — never apply text/EOL conversion.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.webp binary
+*.ico  binary
+*.icns binary
+*.pdf  binary
+*.zip  binary
+*.woff  binary
+*.woff2 binary
+*.ttf  binary
+*.otf  binary

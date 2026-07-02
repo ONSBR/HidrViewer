@@ -1,13 +1,11 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "HidrViewer",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "identifier": "br.com.jhulia.hidrviewer",
   "build": {
-    "beforeDevCommand": "npx http-server ../frontend -p 8080",
-  "devUrl": "http://127.0.0.1:8080",
-  "frontendDist": "../frontend"
-},
+    "frontendDist": "../frontend"
+  },
   "app": {
     "windows": [
       {
