@@ -1,15 +1,22 @@
 {
   "name": "HidrViewer",
-  "version": "0.0.1",
-  "description": "",
-  "main": "hidr_viewer_split.js",
+  "version": "1.0.0",
+  "description": "Visualizador, conversor e editor do arquivo binário hidr.dat das usinas hidrelétricas (NEWAVE, DECOMP, DESSEM).",
   "devDependencies": {
     "@tauri-apps/cli": "^2.11.2"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "tauri": "tauri",
+    "dev": "tauri dev",
+    "build": "tauri build"
   },
-  "keywords": [],
+  "keywords": [
+    "tauri",
+    "hidr.dat",
+    "newave",
+    "decomp",
+    "dessem"
+  ],
   "author": "Jhulia Ferraz",
   "license": "MIT",
   "type": "commonjs"

@@ -1,6 +1,6 @@
 [package]
-name = "app"
-version = "0.0.1"
+name = "hidrviewer"
+version = "1.0.0"
 description = "Visualizador, conversor e editor do arquivo binário hidr.dat das usinas hidrelétricas (NEWAVE, DECOMP, DESSEM)."
 authors = ["Jhulia Ferraz"]
 license = "MIT"
