@@ -16,8 +16,8 @@ Desenvolvido com o framework [**Tauri**](https://tauri.app), combina um backend 
 O HidrViewer é distribuído para **Windows 64-bit**. Baixe o instalador na página de
 [**Releases**](https://github.com/jhuliamacedo/HidrViewer/releases/latest):
 
-- **`HidrViewer_0.0.1_x64-setup.exe`** — instalador NSIS.
-- **`HidrViewer_0.0.1_x64_en-US.msi`** — pacote MSI.
+- **`HidrViewer_1.0.0_x64-setup.exe`** — instalador NSIS.
+- **`HidrViewer_1.0.0_x64_en-US.msi`** — pacote MSI.
 
 1. Baixe um dos instaladores acima.
 2. Execute-o e siga as instruções na tela.
