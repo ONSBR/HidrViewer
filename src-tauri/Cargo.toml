@@ -5,8 +5,8 @@ description = "Visualizador, conversor e editor do arquivo binário hidr.dat das
 authors = ["Jhulia Ferraz"]
 license = "MIT"
 repository = "https://github.com/jhuliamacedo/HidrViewer"
-edition = "2021"
-rust-version = "1.77.2"
+edition = "2024"
+rust-version = "1.85"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
