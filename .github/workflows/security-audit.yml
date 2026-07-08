@@ -1,0 +1,62 @@
+name: Security audit
+
+# Scans the Rust dependency tree (src-tauri/Cargo.lock) for RustSec advisories,
+# disallowed licenses, and untrusted crate sources. Runs on dependency changes,
+# on every PR, and weekly so newly published advisories are caught even when the
+# lockfile hasn't changed.
+#
+# Two-tier design (see THIRD_PARTY_LICENSES.md §7):
+#   * cargo-deny  — BLOCKING gate scoped to the shipped Windows binary (deny.toml).
+#   * cargo-audit — non-blocking, full cross-platform tree, for dev-platform
+#                   awareness (surfaces Linux-only advisories without failing CI).
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - "**/Cargo.toml"
+      - "**/Cargo.lock"
+      - "src-tauri/deny.toml"
+      - ".github/workflows/security-audit.yml"
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "**/Cargo.toml"
+      - "**/Cargo.lock"
+      - "src-tauri/deny.toml"
+      - ".github/workflows/security-audit.yml"
+  schedule:
+    - cron: "0 6 * * 1" # Mondays 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cargo-deny:
+    name: cargo-deny (Windows gate — advisories, licenses, sources, bans)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: cargo-deny check
+        uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          manifest-path: src-tauri/Cargo.toml
+          command: check advisories licenses sources bans
+
+  cargo-audit:
+    name: cargo-audit (full tree — informational)
+    runs-on: ubuntu-latest
+    # Non-blocking: this scans the whole cross-platform lockfile, including
+    # Linux-only crates that are not in the shipped Windows binary. It exists for
+    # visibility; the cargo-deny job above is the authoritative blocking gate.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-audit
+      - name: cargo audit
+        working-directory: src-tauri
+        run: cargo audit

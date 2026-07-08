@@ -1,0 +1,38 @@
+# cargo-about configuration — generates the third-party Rust crate license
+# attribution report for HidrViewer. See THIRD_PARTY_LICENSES.md §4.
+#
+#   cargo about generate --config about.toml about.hbs > ../THIRD_PARTY_RUST.md
+#
+# `accepted` is the allow-list of SPDX license identifiers that may legitimately
+# appear in a Tauri dependency tree. If cargo-about reports a license NOT in this
+# list, review it before shipping — that is exactly the pitfall this catches.
+
+accepted = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Zlib",
+    "MPL-2.0",
+    "Unicode-DFS-2016",
+    "Unicode-3.0",
+    "CC0-1.0",
+    "0BSD",
+    "OpenSSL",
+    "BSL-1.0",
+    "CDLA-Permissive-2.0",
+]
+
+# Evaluate every target the crate tree can be built for (Windows is the shipped
+# target, but the Linux/macOS GTK/AppKit branches are documented too for a
+# complete attribution picture).
+targets = []
+
+# Built-in clarifications for crates whose license files cargo-about cannot infer
+# purely from crate metadata (dual-licensed / vendored license text).
+workarounds = [
+    "ring",
+    "rustls",
+]

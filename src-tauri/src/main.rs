@@ -9,7 +9,12 @@ fn main() {
     // is inert on Windows/macOS.
     #[cfg(target_os = "linux")]
     if std::env::var_os("WEBKIT_DISABLE_DMABUF_RENDERER").is_none() {
-        std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
+        // SAFETY: runs at the very start of `main`, before any threads are spawned,
+        // so nothing else can read or write the process environment concurrently.
+        // Edition 2024 marks `set_var` unsafe because concurrent env mutation is UB.
+        unsafe {
+            std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
+        }
     }
 
     app_lib::run();
