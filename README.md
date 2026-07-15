@@ -14,7 +14,7 @@ Desenvolvido com o framework [**Tauri**](https://tauri.app), combina um backend 
 ## Instalação
 
 O HidrViewer é distribuído para **Windows 64-bit**. Baixe o instalador na página de
-[**Releases**](https://github.com/jhuliamacedo/HidrViewer/releases/latest):
+[**Releases**](https://github.com/ONSBR/HidrViewer/releases/latest):
 
 - **`HidrViewer_1.0.0_x64-setup.exe`** — instalador NSIS.
 - **`HidrViewer_1.0.0_x64_en-US.msi`** — pacote MSI.
@@ -25,12 +25,12 @@ O HidrViewer é distribuído para **Windows 64-bit**. Baixe o instalador na pág
 
 ## Tecnologia
 
-| Camada        | Tecnologia                    |
-| ------------- | ----------------------------- |
-| Framework     | [Tauri](https://tauri.app)    |
-| Backend       | Rust                          |
-| Interface     | HTML, CSS e JavaScript        |
-| Empacotamento | Instalador NSIS (Windows x64) |
+| Camada        | Tecnologia                            |
+| ------------- | ------------------------------------- |
+| Framework     | [Tauri](https://tauri.app)            |
+| Backend       | Rust                                  |
+| Interface     | HTML, CSS e JavaScript                |
+| Empacotamento | Instaladores NSIS e MSI (Windows x64) |
 
 ## Desenvolvimento
 
@@ -39,7 +39,7 @@ Instruções para compilar e executar o HidrViewer a partir do código-fonte.
 ### Pré-requisitos
 
 - [**Node.js**](https://nodejs.org) 18 ou superior (fornece o `npm`, usado apenas para o Tauri CLI).
-- [**Rust**](https://www.rust-lang.org/tools/install) 1.77.2 ou superior, instalado via `rustup`.
+- [**Rust**](https://www.rust-lang.org/tools/install) 1.85 ou superior (o projeto usa a edição 2024), instalado via `rustup`.
 - No **Linux**, as bibliotecas de sistema do WebKitGTK (abaixo). Windows e macOS não exigem pacotes adicionais além do toolchain.
 
 #### Dependências de sistema (Linux)
@@ -95,6 +95,10 @@ npm install     # instala o Tauri CLI declarado em devDependencies
 npm run dev     # executa em modo de desenvolvimento
 npm run build   # gera os instaladores em src-tauri/target/release/bundle/
 ```
+
+## Histórico de mudanças
+
+As mudanças de cada versão estão documentadas em [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Licença
 

@@ -4,7 +4,7 @@ version = "1.0.0"
 description = "Visualizador, conversor e editor do arquivo binário hidr.dat das usinas hidrelétricas (NEWAVE, DECOMP, DESSEM)."
 authors = ["Jhulia Ferraz"]
 license = "MIT"
-repository = "https://github.com/jhuliamacedo/HidrViewer"
+repository = "https://github.com/ONSBR/HidrViewer"
 edition = "2024"
 rust-version = "1.85"
 
