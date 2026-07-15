@@ -32,6 +32,8 @@ dos instaladores Windows.
   projeto.
 - Referências de repositório atualizadas para `github.com/ONSBR/HidrViewer` e
   correção dos pré-requisitos de compilação na documentação.
+- Instalador MSI passa a ser gerado em português do Brasil (`pt-BR`), em vez de
+  `en-US`.
 
 ### Segurança
 

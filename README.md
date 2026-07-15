@@ -17,7 +17,7 @@ O HidrViewer é distribuído para **Windows 64-bit**. Baixe o instalador na pág
 [**Releases**](https://github.com/ONSBR/HidrViewer/releases/latest):
 
 - **`HidrViewer_1.0.0_x64-setup.exe`** — instalador NSIS.
-- **`HidrViewer_1.0.0_x64_en-US.msi`** — pacote MSI.
+- **`HidrViewer_1.0.0_x64_pt-BR.msi`** — pacote MSI.
 
 1. Baixe um dos instaladores acima.
 2. Execute-o e siga as instruções na tela.
