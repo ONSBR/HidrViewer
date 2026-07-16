@@ -2,6 +2,10 @@
   "name": "HidrViewer",
   "version": "1.0.0",
   "description": "Visualizador, conversor e editor do arquivo binário hidr.dat das usinas hidrelétricas (NEWAVE, DECOMP, DESSEM).",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ONSBR/HidrViewer.git"
+  },
   "devDependencies": {
     "@tauri-apps/cli": "^2.11.2"
   },
