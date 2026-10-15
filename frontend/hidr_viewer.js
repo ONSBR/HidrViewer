@@ -1721,6 +1721,7 @@ function selectPlant(idx) {
   var sel = document.querySelector('.plant-card[data-idx="' + idx + '"]');
   if (sel) sel.classList.add("selected");
   renderDetail(allRecords[idx]);
+  if (typeof grOnPlantChange === "function") grOnPlantChange(idx);   // aba Graficos
 }
 
 document.getElementById("plantSearch").addEventListener("input", function() {

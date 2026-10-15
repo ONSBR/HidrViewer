@@ -8,10 +8,11 @@ Microsoft Edge WebView2 runtime.
 This document lists the third-party software distributed with, or required by,
 HidrViewer, together with the licenses under which that software is provided.
 
-> **Scope note.** HidrViewer's own frontend code is original and contains no
-> bundled third-party JavaScript libraries. The third-party surface is therefore:
-> (1) the Tauri framework and its Rust crate dependency tree, (2) the Microsoft
-> Edge WebView2 runtime, and (3) the NSIS installer toolkit used to package the app.
+> **Scope note.** HidrViewer's own frontend code is original. Its only bundled
+> third-party JavaScript library is Chart.js (§8), used by the "Gráficos" tab.
+> The third-party surface is therefore: (1) the Tauri framework and its Rust crate
+> dependency tree, (2) the Microsoft Edge WebView2 runtime, (3) the NSIS installer
+> toolkit used to package the app, and (4) Chart.js.
 
 ---
 
@@ -220,6 +221,19 @@ no fixed version available:
 
 Both groups are upstream-only: they clear when Tauri migrates off GTK3 / drops
 `urlpattern`. Re-check the triage list on each Tauri upgrade.
+
+---
+
+## 8. Chart.js (bundled JavaScript library)
+
+**Version:** 4.4.7
+**License:** MIT
+**Copyright:** © 2014-2024 Chart.js Contributors
+**Project:** https://www.chartjs.org — https://github.com/chartjs/Chart.js
+
+Shipped unmodified as `frontend/vendor/chart.umd.js` (the UMD build from the npm
+package `chart.js@4.4.7`), loaded locally by the app — no CDN or network access.
+The full license text is shipped next to it in `frontend/vendor/chart.js.LICENSE.md`.
 
 ---
 
