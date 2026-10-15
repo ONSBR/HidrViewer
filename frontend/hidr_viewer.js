@@ -1516,6 +1516,8 @@ dropZone.addEventListener("drop", function(e) {
   e.preventDefault(); dropZone.classList.remove("dragover");
   if (e.dataTransfer.files.length) loadFile(e.dataTransfer.files[0]);
 });
+window.addEventListener("dragover", function(e) { e.preventDefault(); });
+window.addEventListener("drop", function(e) { e.preventDefault(); });
 fileInput.addEventListener("change", function() {
   if (fileInput.files.length) loadFile(fileInput.files[0]);
 });
