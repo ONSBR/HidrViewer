@@ -231,17 +231,61 @@ function renderCev(rec) {
 }
 
 // ── Seletor de usina e ganchos ──
+// Campo de texto com lista de sugestoes: aceita o numero da usina ("169"), o nome
+// ("SOBRADINHO", ou parte dele) ou a opcao da lista ("169 - SOBRADINHO").
+function rotuloUsina(r) { return r.codigo_usina + " - " + r.nome_usina; }
+
 function preencheSeletor() {
-  var sel = el("grUsina");
-  sel.innerHTML = "";
+  var lista = el("grUsinaLista");
+  lista.innerHTML = "";
   for (var i = 0; i < allRecords.length; i++) {
     var r = allRecords[i];
     if (!r.nome_usina) continue;
     var o = document.createElement("option");
-    o.value = i; o.textContent = r.codigo_usina + " - " + r.nome_usina;
-    sel.appendChild(o);
+    o.value = rotuloUsina(r);
+    lista.appendChild(o);
   }
-  if (selectedPlantIdx >= 0) sel.value = selectedPlantIdx;
+  mostraUsinaAtual();
+}
+function mostraUsinaAtual() {
+  var rec = selectedPlantIdx >= 0 ? allRecords[selectedPlantIdx] : null;
+  el("grUsina").value = rec ? rotuloUsina(rec) : "";
+  el("grUsina").classList.remove("gr-invalido");
+  el("grUsinaErro").classList.add("hidden");
+}
+
+// Texto digitado -> indice em allRecords (ou -1). Numero no inicio = codigo da
+// usina; senao procura pelo nome: exato, depois comeca com, depois contem.
+function resolveUsina(texto) {
+  var t = String(texto).trim();
+  if (!t) return -1;
+  var m = t.match(/^(\d+)(\s*-.*)?$/);
+  if (m) {
+    var idx = parseInt(m[1], 10) - 1;
+    return (allRecords[idx] && allRecords[idx].nome_usina) ? idx : -1;
+  }
+  var q = t.toUpperCase(), testes = [
+    function(n) { return n === q; },
+    function(n) { return n.indexOf(q) === 0; },
+    function(n) { return n.indexOf(q) >= 0; }
+  ];
+  for (var k = 0; k < testes.length; k++)
+    for (var i = 0; i < allRecords.length; i++) {
+      var n = String(allRecords[i].nome_usina || "").toUpperCase();
+      if (n && testes[k](n)) return i;
+    }
+  return -1;
+}
+
+function aplicaBusca() {
+  var inp = el("grUsina"), idx = resolveUsina(inp.value);
+  if (idx < 0) {
+    inp.classList.add("gr-invalido");
+    el("grUsinaErro").classList.remove("hidden");
+    return;
+  }
+  if (idx === selectedPlantIdx) mostraUsinaAtual();
+  else selectPlant(idx);   // dispara grOnPlantChange -> atualiza o campo e redesenha
 }
 
 function render() {
@@ -254,13 +298,22 @@ function render() {
 }
 
 // Chamado por selectPlant (hidr_viewer.js) quando a usina muda.
-window.grOnPlantChange = function(idx) {
-  var sel = el("grUsina");
-  if (sel.querySelector('option[value="' + idx + '"]')) sel.value = idx;
+window.grOnPlantChange = function() {
+  mostraUsinaAtual();
   render();
 };
 
-el("grUsina").addEventListener("change", function() { selectPlant(parseInt(this.value, 10)); });
+var inpUsina = el("grUsina");
+inpUsina.addEventListener("change", aplicaBusca);              // opcao da lista ou saida do campo
+inpUsina.addEventListener("keydown", function(e) {
+  if (e.key === "Enter") { e.preventDefault(); aplicaBusca(); }
+  else if (e.key === "Escape") { mostraUsinaAtual(); this.blur(); }
+});
+inpUsina.addEventListener("focus", function() { this.select(); });   // facilita digitar outra
+inpUsina.addEventListener("input", function() {
+  this.classList.remove("gr-invalido");
+  el("grUsinaErro").classList.add("hidden");
+});
 
 // Ao abrir a aba: atualiza a lista (usinas podem ter sido adicionadas/editadas) e redesenha.
 var tabs = document.querySelectorAll(".tab-btn");

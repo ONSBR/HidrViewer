@@ -9,8 +9,8 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ### Adicionado
 
-- Aba **Gráficos**, com seletor de usina sincronizado com a aba Usina, reunindo
-  numa única página:
+- Aba **Gráficos**, com busca da usina por número ou nome (sincronizada com a
+  aba Usina), reunindo numa única página:
   - **Cota × Área × Volume**: curvas cota-volume e cota-área (eixo de área
     invertido) entre o volume mínimo e o máximo, com as cotas mínima e máxima
     do cadastro como referência.

@@ -111,7 +111,10 @@
     <div id="tabGraficos" class="tab-content">
       <div class="gr-toolbar">
         <label for="grUsina">Usina:</label>
-        <select id="grUsina"></select>
+        <input type="text" id="grUsina" list="grUsinaLista" autocomplete="off"
+               placeholder="Número ou nome da usina" title="Digite o número ou o nome da usina e tecle Enter">
+        <datalist id="grUsinaLista"></datalist>
+        <span class="gr-usina-erro hidden" id="grUsinaErro">Usina não encontrada</span>
       </div>
       <div class="gr-body">
         <div class="gr-titulo" id="grTitulo"></div>
