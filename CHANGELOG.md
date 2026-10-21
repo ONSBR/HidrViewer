@@ -5,6 +5,13 @@ Todas as mudanças notáveis neste projeto são documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
 e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [Não lançado]
+
+### Alterado
+
+- Potência efetiva por conjunto (PotEf 1 a 5) passa a ser exibida e exportada
+  no CSV com 3 casas decimais (antes 1), como no CadUsH.
+
 ## [1.0.0] - 2026-07-15
 
 Primeira versão estável. Consolida o aplicativo lançado na 0.0.1 e adiciona
