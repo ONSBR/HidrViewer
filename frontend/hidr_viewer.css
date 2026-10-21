@@ -657,8 +657,4 @@ table.range-selecting tbody { user-select: none; -webkit-user-select: none; }
 .gr-nota { font-size: 0.74rem; color: #7f8c8d; line-height: 1.4; }
 .gr-chart { position: relative; height: 300px; flex-shrink: 0; }
 .gr-chart-lg { height: min(520px, 58vh); }
-.gr-duo { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
-@media (max-width: 1100px) {
-  .gr-duo { grid-template-columns: 1fr; }
-}

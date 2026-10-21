@@ -1,5 +1,5 @@
 // ── Aba Graficos ──
-// Curvas cota x area x volume, queda x volume e coeficientes de evaporacao.
+// Curvas cota x area x volume e coeficientes de evaporacao.
 // Depende de hidr_viewer.js (allRecords, MESES, selectedPlantIdx, selectPlant) e
 // do Chart.js embutido em vendor/chart.umd.js.
 
@@ -22,19 +22,6 @@ function grCota(rec, V) { return grPolyval(grCoefs(rec, "_volume_cota"), V); }
 function grArea(rec, h) { return grPolyval(grCoefs(rec, "_area_cota"), h); }
 
 function grCev(rec, mes) { return Number(rec["evap_" + MESES[mes - 1]]) || 0; }
-
-// Queda bruta e liquida (m) para o volume V, usando o canal de fuga medio como
-// nivel de jusante. Perdas: tipo 1 = % da queda bruta, tipo 2 = metros.
-// Outros tipos retornam null (nao suportado).
-function grQueda(rec, V) {
-  var bruta = grCota(rec, V) - (Number(rec.canal_fuga_medio) || 0);
-  var perdas = Number(rec.perdas) || 0;
-  var liq;
-  if (rec.tipo_perda === 1) liq = bruta * (1 - perdas / 100);
-  else if (rec.tipo_perda === 2) liq = bruta - perdas;
-  else return null;
-  return { bruta: bruta, liq: liq };
-}
 
 // Usina sem volume util (Vmin = Vmax): as curvas se reduzem a um ponto.
 function grSemVolumeUtil(rec) {
@@ -120,7 +107,8 @@ function renderCav(rec) {
     destroi("cvCav");
     var h = grCota(rec, rec.volume_maximo);
     aviso("grCavAviso", "Usina sem volume útil (Vmin = Vmax): a curva se reduz a um ponto.");
-    info.innerHTML = kv("Volume", num(rec.volume_maximo, 2), "hm³") + kv("Cota", num(h, 2), "m") +
+    info.innerHTML = kv("Volume útil", num(0, 2), "hm³") +
+                     kv("Volume", num(rec.volume_maximo, 2), "hm³") + kv("Cota", num(h, 2), "m") +
                      kv("Área", num(grArea(rec, h), 2), "km²");
     return;
   }
@@ -132,6 +120,7 @@ function renderCav(rec) {
     ca.push({ x: grArea(rec, hc), y: hc });
   }
   info.innerHTML =
+    kv("Volume útil", num(rec.volume_maximo - rec.volume_minimo, 2), "hm³") +
     kv("Vol. mín / máx", num(rec.volume_minimo, 2) + " / " + num(rec.volume_maximo, 2), "hm³") +
     kv("Cota calc. mín / máx", num(cv[0].y, 2) + " / " + num(cv[cv.length - 1].y, 2), "m") +
     kv("Cota cadastro mín / máx", num(rec.cota_minima, 2) + " / " + num(rec.cota_maxima, 2), "m") +
@@ -159,50 +148,6 @@ function renderCav(rec) {
           if (c.dataset.xAxisID === "xArea") return "Área " + num(p.x, 2) + " km² · cota " + num(p.y, 3) + " m";
           if (c.datasetIndex >= 2) return c.dataset.label + ": " + num(p.y, 2) + " m";
           return "Volume " + num(p.x, 2) + " hm³ · cota " + num(p.y, 3) + " m";
-        })
-      }
-    }
-  });
-}
-
-// ── Queda x volume ──
-function renderQueda(rec) {
-  var info = el("grQuedaInfo");
-  var perdaTxt = rec.tipo_perda === 1 ? num(rec.perdas, 2) + " %" :
-                 rec.tipo_perda === 2 ? num(rec.perdas, 2) + " m" : num(rec.perdas, 2) + " (tipo " + rec.tipo_perda + ")";
-  info.innerHTML = kv("Canal de fuga médio", num(rec.canal_fuga_medio, 2), "m") + kv("Perdas", perdaTxt, "");
-  if (!grQueda(rec, rec.volume_minimo)) {
-    destroi("cvQueda");
-    aviso("grQuedaAviso", "Tipo de perda " + rec.tipo_perda + " não suportado (só 1 = % e 2 = m).");
-    return;
-  }
-  if (grSemVolumeUtil(rec)) {
-    destroi("cvQueda");
-    var q = grQueda(rec, rec.volume_maximo);
-    aviso("grQuedaAviso", "Usina sem volume útil (Vmin = Vmax): queda constante.");
-    info.innerHTML += kv("Queda bruta", num(q.bruta, 2), "m") + kv("Queda líquida", num(q.liq, 2), "m");
-    return;
-  }
-  aviso("grQuedaAviso", "");
-  var vs = volumes(rec), bruta = [], liq = [];
-  for (var i = 0; i < vs.length; i++) {
-    var qi = grQueda(rec, vs[i]);
-    bruta.push({ x: vs[i], y: qi.bruta });
-    liq.push({ x: vs[i], y: qi.liq });
-  }
-  cria("cvQueda", {
-    type: "scatter",
-    data: { datasets: [
-      linha("Queda bruta", bruta, COR.s2),
-      linha("Queda líquida", liq, COR.s1)
-    ] },
-    options: {
-      interaction: { mode: "nearest", intersect: false },
-      scales: { x: eixo("Volume (hm³)", { min: rec.volume_minimo, max: rec.volume_maximo }), y: eixo("Queda (m)") },
-      plugins: {
-        legend: LEGENDA,
-        tooltip: tooltip(function(c) {
-          return c.dataset.label + ": " + num(c.raw.y, 2) + " m · V " + num(c.raw.x, 0) + " hm³";
         })
       }
     }
@@ -293,7 +238,6 @@ function render() {
   if (!rec || !abaAtiva()) return;
   el("grTitulo").textContent = rec.nome_usina + " · Código " + rec.codigo_usina;
   renderCav(rec);
-  renderQueda(rec);
   renderCev(rec);
 }
 

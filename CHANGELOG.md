@@ -13,9 +13,7 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
   aba Usina), reunindo numa única página:
   - **Cota × Área × Volume**: curvas cota-volume e cota-área (eixo de área
     invertido) entre o volume mínimo e o máximo, com as cotas mínima e máxima
-    do cadastro como referência.
-  - **Queda × Volume**: queda bruta e queda líquida (canal de fuga médio e
-    perdas em % ou m).
+    do cadastro como referência e o volume útil junto às demais informações.
   - **Coeficientes de evaporação** mensais do cadastro.
 - Chart.js 4.4.7 embutido em `frontend/vendor/` (MIT).
 
