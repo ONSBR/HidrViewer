@@ -5,6 +5,18 @@ Todas as mudanças notáveis neste projeto são documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
 e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [Não lançado]
+
+### Adicionado
+
+- Aba **Gráficos**, com busca da usina por número ou nome (sincronizada com a
+  aba Usina), reunindo numa única página:
+  - **Cota × Área × Volume**: curvas cota-volume e cota-área (eixo de área
+    invertido) entre o volume mínimo e o máximo, com as cotas mínima e máxima
+    do cadastro como referência e o volume útil junto às demais informações.
+  - **Coeficientes de evaporação** mensais do cadastro.
+- Chart.js 4.4.7 embutido em `frontend/vendor/` (MIT).
+
 ## [1.0.0] - 2026-07-15
 
 Primeira versão estável. Consolida o aplicativo lançado na 0.0.1 e adiciona
