@@ -352,9 +352,10 @@ function inflLabel(val) { return INFL_CANAL[val] || null; }
 var REGULACAO = { D: "D - Diaria", M: "M - Mensal", S: "S - Semanal" };
 function regLabel(val) { return REGULACAO[String(val).trim().toUpperCase()] || null; }
 
-// Tipo de perda hidraulica: 1 = perda em % da queda; 2 = perda constante em metros.
+// Tipo de perda hidraulica: 1 = perda em % da queda; 2 = perda constante em metros;
+// 3 = coeficiente K (rotulo herdado do CadUsH).
 // No binario continua o numero (csvNum le o numero a frente: "1 - %" -> 1).
-var TIPO_PERDA = { 1: "1 - %", 2: "2 - m" };
+var TIPO_PERDA = { 1: "1 - %", 2: "2 - m", 3: "3 - K" };
 function perdaLabel(val) { return TIPO_PERDA[val] || null; }
 
 // Representacao do conjunto de maquinas. Rotulo SO na exibicao (detalhe/tabela);
@@ -567,13 +568,58 @@ function parseCSV(text) {
   return { headers: headers, rows: rows };
 }
 
+// Separador ambiguo no numero (ex.: "1.234,56" com milhar, "1,5,7"): o parseFloat
+// leria so o comeco (1.234 / 1.5) e gravaria um valor errado sem avisar. Olha so o
+// numero do inicio, para nao confundir com rotulos como "175 - P.AFONSO 4".
+function numSeparadorAmbiguo(s) {
+  var m = String(s).trim().match(/^[-+]?[\d.,]+/);
+  if (!m) return false;
+  var nV = (m[0].match(/,/g) || []).length, nP = (m[0].match(/\./g) || []).length;
+  return (nV > 0 && nP > 0) || nV > 1 || nP > 1;
+}
+var MSG_SEPARADOR = "use só a vírgula (ou o ponto) como separador decimal, sem separador de milhar — ex.: 1234,56";
+
 function csvNum(s) {
   if (s === undefined || s === null) return null;
   s = String(s).trim();
   if (s === "") return null;
+  if (numSeparadorAmbiguo(s)) return null;
   s = s.replace(",", ".");
   var v = parseFloat(s);
   return isNaN(v) ? null : v;
+}
+
+// Valida um valor (texto da celula ou do CSV) para o campo f ANTES de gravar no
+// buffer. Retorna { valor } (numero ja convertido, ou o proprio texto) ou
+// { motivo } quando o valor corromperia o hidr.dat:
+//  - texto com caractere fora do ASCII (o Fortran le byte a byte) ou maior que o
+//    campo (antes era cortado sem aviso). Tipo de regulacao fica de fora do limite
+//    de tamanho: a celula exibe "M - Mensal" e grava so a letra;
+//  - inteiro fora da faixa de int32 (setInt32 "dava a volta": 3e9 -> -1294967296);
+//  - real que nao cabe em REAL*4/REAL*8 (virava Infinity no arquivo).
+var INT32_MIN = -2147483648, INT32_MAX = 2147483647;
+function validaValor(f, raw) {
+  if (f.type === "string") {
+    var t = String(raw == null ? "" : raw).replace(/\s+$/, "");
+    var fora = t.match(/[^\x20-\x7e]/);
+    if (fora) return { motivo: "caractere \"" + fora[0] + "\" não permitido — use só caracteres ASCII, sem acentos." };
+    if (f.name !== "tipo_regulacao" && t.length > f.size)
+      return { motivo: "texto com " + t.length + " caracteres; o campo aceita no máximo " + f.size + "." };
+    return { valor: t };
+  }
+  var v = parseFieldNum(raw, f.name);
+  if (v === null)
+    return { motivo: numSeparadorAmbiguo(raw) ? MSG_SEPARADOR : "não é um número válido." };
+  if (f.type === "int32") {
+    v = roundInt(v);
+    if (!(v >= INT32_MIN && v <= INT32_MAX))
+      return { motivo: "inteiro fora da faixa permitida (−2147483648 a 2147483647)." };
+  } else if (f.type === "float32") {
+    if (!isFinite(Math.fround(v))) return { motivo: "valor fora da faixa do REAL*4 (até ±3,4E+38)." };
+  } else if (!isFinite(v)) {
+    return { motivo: "valor fora da faixa do REAL*8." };
+  }
+  return { valor: v };
 }
 
 function writeStringField(buffer, off, size, str) {
@@ -602,7 +648,17 @@ function csvCellOf(rec, f) {
   return String(fmt(rec[f.name], f, true)).replace(",", ".");
 }
 
-function writeRecord(buffer, isR8, recIndex, valuesByName, currentRec) {
+// "invalidos" (opcional) recebe {codigo, campo, valor, motivo} dos valores recusados
+// por validaValor: nesses casos o valor antigo e PRESERVADO, e quem chama avisa o
+// usuario (antes era descartado ou gravado corrompido em silencio). Celula numerica
+// vazia continua significando "manter o valor atual", sem aviso.
+function writeRecord(buffer, isR8, recIndex, valuesByName, currentRec, invalidos) {
+  function valida(f, raw) {
+    var r = validaValor(f, raw);
+    if (r.motivo && invalidos && (f.type === "string" || String(raw).trim() !== ""))
+      invalidos.push({ codigo: recIndex + 1, campo: csvHeaderFor(f.name), valor: String(raw).trim(), motivo: r.motivo });
+    return r;
+  }
   var recSize = isR8 ? REC_R8 : REC_R4;
   var fields = buildFields(isR8);
   var view = new DataView(buffer);
@@ -629,25 +685,34 @@ function writeRecord(buffer, isR8, recIndex, valuesByName, currentRec) {
     // perda de 1 ULP na ida-e-volta texto -> float.
     var rawNorm = String(raw).trim().replace(",", ".");
     if (f.type === "string") {
-      if (String(raw) !== expected) writeStringField(buffer, off, f.size, raw);
+      if (String(raw) !== expected) {
+        var rs = valida(f, raw);
+        if (!rs.motivo) writeStringField(buffer, off, f.size, raw);
+      }
       off += f.size;
     } else if (f.type === "int32") {
       if (rawNorm === expected) { off += 4; continue; }
-      var vi = parseFieldNum(raw, f.name);
-      if (vi !== null) view.setInt32(off, roundInt(vi), true);
+      if (String(raw).trim() !== "") {
+        var ri = valida(f, raw);
+        if (!ri.motivo) view.setInt32(off, ri.valor, true);
+      }
       off += 4;
     } else if (f.type === "float32") {
       if (rawNorm === expected) { off += 4; continue; }
-      var vf = csvNum(raw);
-      if (vf !== null) view.setFloat32(off, vf, true);
+      if (String(raw).trim() !== "") {
+        var rf = valida(f, raw);
+        if (!rf.motivo) view.setFloat32(off, rf.valor, true);
+      }
       off += 4;
     } else if (f.type === "float64") {
       // Coefs CV/CA: SEMPRE grava o valor do CSV como float64 nativo (real8 genuino),
       // sem a otimizacao "pula se nao mudou" — assim nunca se preserva o float32
       // alargado pela conversao R4->R8 (que carregaria a cauda binaria). Para usinas
       // ausentes no CSV (raw === undefined) o bloco acima preserva o valor convertido.
-      var vd = csvNum(raw);
-      if (vd !== null) view.setFloat64(off, vd, true);
+      if (String(raw).trim() !== "") {
+        var rd = valida(f, raw);
+        if (!rd.motivo) view.setFloat64(off, rd.valor, true);
+      }
       off += 8;
     }
   }
@@ -688,6 +753,12 @@ function updateFlowUI() {
 // targetR8 = true  -> importacao REAL*8 GENUINA: promove R4->R8 e grava os coefs
 //                     CV/CA como float64 nativo (parseFloat -> setFloat64), sem cauda.
 // targetR8 = false -> importacao REAL*4: NAO promove; grava no buffer R4 como float32.
+function buffersIguais(a, b) {
+  if (a.length !== b.length) return false;
+  for (var i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+  return true;
+}
+
 function applyCSV(text, targetR8) {
   if (!originalBuffer) {
     alert("Carregue primeiro um arquivo hidr.dat para aplicar valores do CSV.");
@@ -703,6 +774,35 @@ function applyCSV(text, targetR8) {
     return;
   }
 
+  // Problemas de estrutura do CSV: avisa ANTES de aplicar (o usuario pode cancelar).
+  //  - coluna nao reconhecida (ex.: cabecalho digitado errado) e ignorada, e os
+  //    valores dela NAO entram no arquivo;
+  //  - codigo repetido: so a ultima linha vale;
+  //  - linha sem codigo valido: e ignorada.
+  var conhecidos = {};
+  buildFields(false).forEach(function(f) { conhecidos[f.name] = true; });
+  var desconhecidas = parsed.headers.filter(function(h) { return h !== "" && !conhecidos[h]; });
+  var vistosCod = {}, duplicados = [], semCodigo = 0;
+  for (var iv = 0; iv < parsed.rows.length; iv++) {
+    var cv = parseInt(parsed.rows[iv].codigo_usina);
+    if (isNaN(cv) || cv < 1) { semCodigo++; continue; }
+    if (vistosCod[cv] && duplicados.indexOf(cv) < 0) duplicados.push(cv);
+    vistosCod[cv] = true;
+  }
+  var avisosEstrutura = [];
+  if (desconhecidas.length)
+    avisosEstrutura.push("• " + desconhecidas.length + " coluna(s) não reconhecida(s) — serão IGNORADAS (os valores atuais do arquivo ficam como estão):\n   " +
+      desconhecidas.slice(0, 12).join(" | ") + (desconhecidas.length > 12 ? " | …" : ""));
+  if (duplicados.length)
+    avisosEstrutura.push("• Código(s) repetido(s) — só a ÚLTIMA linha de cada um será aplicada: " +
+      duplicados.slice(0, 20).join(", ") + (duplicados.length > 20 ? ", …" : ""));
+  if (semCodigo)
+    avisosEstrutura.push("• " + semCodigo + " linha(s) sem código de usina válido — serão ignoradas.");
+  if (avisosEstrutura.length &&
+      !confirm("Atenção ao importar o CSV:\n\n" + avisosEstrutura.join("\n\n") + "\n\nDeseja continuar a importação?"))
+    return;
+
+  var convertido = false;   // promocao R4 -> R8 tambem conta como alteracao pendente
   if (targetR8) {
     // Se origem e REAL*4, promove o buffer para REAL*8 antes de aplicar.
     // Os coefs CV/CA do CSV passam a ser gravados como float64 nativos
@@ -710,6 +810,7 @@ function applyCSV(text, targetR8) {
     if (!isOrigR8) {
       originalBuffer = convertToR8(originalBuffer);
       isOrigR8 = true;
+      convertido = true;
       currentFields = buildFields(true);
     }
   } else {
@@ -746,15 +847,19 @@ function applyCSV(text, targetR8) {
 
   // Snapshot dos registros atuais para detectar quais celulas o usuario realmente alterou
   var currentRecords = parseRecords(originalBuffer, useR8);
-  var applied = 0;
+  var antes = new Uint8Array(originalBuffer.slice(0));   // p/ saber se algo mudou de fato
+  var applied = 0, invalidos = [];
   for (var r = 0; r < nRec; r++) {
     var row2 = byCode[r + 1];
     if (!row2) continue;
-    writeRecord(originalBuffer, useR8, r, row2, currentRecords[r]);
+    writeRecord(originalBuffer, useR8, r, row2, currentRecords[r], invalidos);
     applied++;
   }
 
   csvApplied = true;
+  // So marca pendencia se o conteudo mudou (reimportar o CSV recem-exportado nao conta).
+  if (convertido || created > 0 || !buffersIguais(antes, new Uint8Array(originalBuffer)))
+    alteracoesPendentes = true;
 
   // Re-parse e atualiza visualizacao
   allRecords = parseRecords(originalBuffer, useR8);
@@ -790,6 +895,14 @@ function applyCSV(text, targetR8) {
   var msg = "CSV aplicado (" + (useR8 ? "REAL*8" : "REAL*4") + "): " + applied + " registro(s) atualizado(s).";
   if (created > 0) msg += "\n" + created + " registro(s) novo(s) criado(s) (arquivo agora com " + nRec + " registros).";
   if (dropped > 0) msg += "\nATENCAO: " + dropped + " usina(s) do CSV com codigo acima de " + MAX_REC + " foram ignoradas (teto de " + MAX_REC + " registros).";
+  if (invalidos.length) {
+    msg += "\n\nATENCAO: " + invalidos.length + " valor(es) foram recusados e NÃO foram gravados " +
+      "(o valor anterior do arquivo foi mantido):\n\n" +
+      invalidos.slice(0, 12).map(function(x) {
+        return "• Usina " + x.codigo + ", " + x.campo + ": \"" + x.valor + "\" — " + x.motivo;
+      }).join("\n") +
+      (invalidos.length > 12 ? "\n…" : "");
+  }
   if (nErros > 0) {
     var linhas = linhasDeErro();
     msg += "\n\nATENCAO: " + linhas.length + " inconsistencia(s) detectada(s) nos dados importados " +
@@ -810,6 +923,7 @@ var isOrigR8 = false;
 var csvApplied = false;   // true apos um import de CSV; libera download de REAL*8
 var editMode = false;     // modo edicao da tabela
 var dirtyCells = {};      // celulas alteradas nesta sessao: chave "recIndex:campo"
+var alteracoesPendentes = false;  // buffer alterado (edicao, CSV, nova usina) e ainda nao exportado
 
 // ── Conversao REAL*4 → REAL*8 ──
 var OFF_CV = 64;
@@ -938,6 +1052,7 @@ function downloadHidr() {
   a.click();
   URL.revokeObjectURL(url);
   dirtyCells = {};
+  alteracoesPendentes = false;
   if (editMode) toggleEdit();          // sai do modo edicao e colapsa as vazias
   else { collapseBlanks(); applyFilters(); }
   showToast("hidr.dat exportado em " + (isOrigR8 ? "REAL*8" : "REAL*4") + " (" + nRec + " registros).");
@@ -1039,6 +1154,8 @@ function fieldByName(name) {
 // Escreve UMA celula no buffer respeitando o formato atual (R4/R8) e le de volta
 // o valor realmente armazenado para allRecords (e, por referencia, visibleRecords).
 // Retorna false se o texto for invalido para o tipo do campo (nada e gravado).
+// Motivo da ultima recusa de writeCell (mostrado ao usuario por commitFromCell).
+var motivoRecusa = "";
 function writeCell(recIndex, fieldName, rawText) {
   var isR8 = isOrigR8;
   var recSize = isR8 ? REC_R8 : REC_R4;
@@ -1050,6 +1167,8 @@ function writeCell(recIndex, fieldName, rawText) {
     if (f.type === "index") continue;
     if (f.type === "skip") { off += f.size; continue; }
     if (f.name === fieldName) {
+      var chk = validaValor(f, rawText);
+      if (chk.motivo) { motivoRecusa = chk.motivo; return false; }   // invalido -> nao grava
       if (f.type === "string") {
         writeStringField(originalBuffer, off, f.size, rawText);
         var bytes = new Uint8Array(originalBuffer, off, f.size);
@@ -1058,9 +1177,8 @@ function writeCell(recIndex, fieldName, rawText) {
         allRecords[recIndex][fieldName] = s.replace(/\0+$/g, "").trim();
         return true;
       }
-      var v = parseFieldNum(rawText, fieldName);
-      if (v === null) return false;   // texto invalido -> nao grava
-      if (f.type === "int32")        { view.setInt32(off, roundInt(v), true);  allRecords[recIndex][fieldName] = view.getInt32(off, true); }
+      var v = chk.valor;
+      if (f.type === "int32")        { view.setInt32(off, v, true);  allRecords[recIndex][fieldName] = view.getInt32(off, true); }
       else if (f.type === "float32") { view.setFloat32(off, v, true);    allRecords[recIndex][fieldName] = view.getFloat32(off, true); }
       else if (f.type === "float64") { view.setFloat64(off, v, true);    allRecords[recIndex][fieldName] = view.getFloat64(off, true); }
       return true;
@@ -1084,12 +1202,14 @@ function commitFromCell(td) {
   // Nao mudou -> preserva os bytes originais (evita perda de 1 ULP em float)
   if (newText.trim() === orig.trim()) { td.textContent = orig; return; }
   if (!writeCell(recIndex, fieldName, newText.trim())) {
-    // invalido (tipo) -> reverte + flash vermelho
+    // invalido (tipo) -> reverte + flash vermelho + motivo
     td.textContent = orig;
     td.classList.add("cell-error");
     setTimeout(function() { td.classList.remove("cell-error"); }, 1000);
+    showToast("✖ Valor não gravado: " + motivoRecusa);
     return;
   }
+  alteracoesPendentes = true;
   td.textContent = fmtDisplay(allRecords[recIndex][fieldName], f);
   dirtyCells[recIndex + ":" + fieldName] = true;
   td.classList.add("cell-dirty");
@@ -1211,9 +1331,9 @@ function validaCelula(recIndex, fieldName) {
       if (["D","M","S"].indexOf(String(v).trim().toUpperCase()) < 0) return erro("Regulação deve ser D, M ou S.");
       break;
     case "tipo_perda":
-      // default 0 = ainda nao preenchido -> nao marca; valida so com 1 ou 2 digitado.
+      // default 0 = ainda nao preenchido -> nao marca; valida so com 1, 2 ou 3 digitado.
       if (v === 0) break;
-      if ([1,2].indexOf(v) < 0) return erro("Tipo de perda deve ser 1 ou 2.");
+      if ([1,2,3].indexOf(v) < 0) return erro("Tipo de perda deve ser 1, 2 ou 3.");
       break;
     case "infl_vert_canal_fuga":
       if ([0,1].indexOf(v) < 0) return erro("Influência no canal de fuga deve ser 0 (No) ou 1 (Yes).");
@@ -1473,6 +1593,7 @@ function addUsina() {
   var created = 0;
   if (n > curRec) {
     created = growBufferTo(tamanhoPadraoPara(n), isOrigR8);
+    if (created > 0) alteracoesPendentes = true;
     allRecords = parseRecords(originalBuffer, isOrigR8);
     visibleRecords = allRecords.filter(function(r) { return r.nome_usina && r.nome_usina.length > 0; });
     document.getElementById("infoTamReg").textContent = recSize + " bytes";
@@ -1555,6 +1676,11 @@ document.getElementById("fileInputConvert").addEventListener("change", function(
 document.getElementById("btnR8").addEventListener("click", downloadHidr);
 document.getElementById("btnEdit").addEventListener("click", toggleEdit);
 document.getElementById("btnReset").addEventListener("click", function() {
+  if (alteracoesPendentes &&
+      !confirm("Há alterações no hidr.dat que ainda não foram exportadas.\n\n" +
+               "Abrir um novo arquivo descarta essas alterações. Deseja continuar?"))
+    return;
+  alteracoesPendentes = false;
   document.getElementById("controls").classList.add("hidden");
   document.getElementById("headerInfo").classList.add("hidden");
   dropZone.classList.remove("hidden");
@@ -1649,6 +1775,7 @@ function loadFile(file) {
     document.getElementById("filtroNome").value = "";
     document.getElementById("filtroCod").value = "";
     editMode = false; dirtyCells = {};   // garante render nao-editavel ao (re)carregar
+    alteracoesPendentes = false;
     buildTable(visibleRecords);
     buildPlantCards(allRecords);
     document.getElementById("plantSearch").value = "";
