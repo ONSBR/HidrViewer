@@ -53,11 +53,11 @@ var POST_FIELDS = [
   { name: "maq_conj_3", label: "Máquinas Conjunto 3", type: "int32", size: 4 },
   { name: "maq_conj_4", label: "Máquinas Conjunto 4", type: "int32", size: 4 },
   { name: "maq_conj_5", label: "Máquinas Conjunto 5", type: "int32", size: 4 },
-  { name: "pot_conj_1", label: "PotEf1", type: "float32", size: 4, unit: "MW", dec: 1 },
-  { name: "pot_conj_2", label: "PotEf2", type: "float32", size: 4, unit: "MW", dec: 1 },
-  { name: "pot_conj_3", label: "PotEf3", type: "float32", size: 4, unit: "MW", dec: 1 },
-  { name: "pot_conj_4", label: "PotEf4", type: "float32", size: 4, unit: "MW", dec: 1 },
-  { name: "pot_conj_5", label: "PotEf5", type: "float32", size: 4, unit: "MW", dec: 1 },
+  { name: "pot_conj_1", label: "PotEf1", type: "float32", size: 4, unit: "MW", dec: 3 },
+  { name: "pot_conj_2", label: "PotEf2", type: "float32", size: 4, unit: "MW", dec: 3 },
+  { name: "pot_conj_3", label: "PotEf3", type: "float32", size: 4, unit: "MW", dec: 3 },
+  { name: "pot_conj_4", label: "PotEf4", type: "float32", size: 4, unit: "MW", dec: 3 },
+  { name: "pot_conj_5", label: "PotEf5", type: "float32", size: 4, unit: "MW", dec: 3 },
   { name: "_bloco_300", label: "", type: "skip", size: 300 },
   { name: "queda_nom_1", label: "HEf1", type: "float32", size: 4, unit: "m", dec: 2 },
   { name: "queda_nom_2", label: "HEf2", type: "float32", size: 4, unit: "m", dec: 2 },
@@ -1827,7 +1827,7 @@ function renderDetail(rec) {
     var nMaq = rec["maq_conj_" + m];
     if (nMaq === 0 && m > rec.num_conj_maquinas) continue;
     h += '<tr><td style="font-weight:600;">' + m + '</td><td>' + nMaq + '</td>' +
-         '<td style="font-weight:600;color:#1a7a4a;">' + dnum(rec["pot_conj_" + m], 1) + '</td>' +
+         '<td style="font-weight:600;color:#1a7a4a;">' + dnum(rec["pot_conj_" + m], 3) + '</td>' +
          '<td>' + (rec["vazao_nom_" + m] || 0) + '</td>' +
          '<td>' + dnum(rec["queda_nom_" + m], 2) + '</td></tr>';
   }
